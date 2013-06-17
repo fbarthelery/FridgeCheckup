@@ -35,7 +35,9 @@
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="application/vnd.com.genymobile.fridgecheckup" />
+                <data android:mimeType="application/vnd.com.geny.fridge" />
+		<!-- long name -->
+		<data android:mimeType="application/vnd.com.genymobile.fridgecheckup" />
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>

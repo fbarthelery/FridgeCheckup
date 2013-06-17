@@ -1,13 +1,17 @@
 package com.genymobile.fridgecheckup;
 
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.nfc.*;
 import android.nfc.tech.Ndef;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -25,8 +29,12 @@ import java.util.Date;
 public class WriteTagActivity extends Activity {
 
     private final static String TAG = WriteTagActivity.class.getSimpleName();
-    private final static String TIME_MIMETYPE = "application/vnd.com.genymobile.fridgecheckup";
-    private final static String USER_MIMETYPE = "application/vnd.com.genymobile.fridgecheckup.username";
+    private final static String TIME_MIMETYPE = "application/vnd.com.geny.fridge";
+    // Abbreviate to the max
+    private final static String USER_MIMETYPE = "app/vnd.c.geny.f.u";
+    private static final String ACCOUNT_NAME = "account";
+    private static final int REQUEST_SELECT_ACCOUNT = 0;
+    private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
     private NfcAdapter nfcAdapter;
     private Tag nfcTag;
     private Ndef ndef;
@@ -36,6 +44,7 @@ public class WriteTagActivity extends Activity {
     private TextView infoTxt;
     private TextView scanTxt;
     private boolean writeMode = false;
+    private String accountName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +56,10 @@ public class WriteTagActivity extends Activity {
 	tagBtn = (ImageButton) findViewById(R.id.tagButton);
 	infoTxt = (TextView) findViewById(R.id.infoLabel);
 	scanTxt = (TextView) findViewById(R.id.scanLabel);
+	accountName = getAccountName();
+	if (TextUtils.isEmpty(accountName)) {
+	    selectAccount();
+	}
     }
 
     @Override
@@ -67,12 +80,11 @@ public class WriteTagActivity extends Activity {
     protected void onNewIntent(Intent intent) {
 	super.onNewIntent(intent);
 	Log.i(TAG, "onNewIntent");
+	parseIntent(intent);
+	setIntent(intent);
+	updateTagTexts();
 	if (writeMode) {
 	    writeTag();
-	} else {
-	    parseIntent(intent);
-	    setIntent(intent);
-	    updateTagTexts();
 	}
     }
 
@@ -90,7 +102,8 @@ public class WriteTagActivity extends Activity {
     }
 
     private void parseIntent(Intent intent) {
-	if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
+	String action = intent.getAction();
+	if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
 	    Log.i(TAG, "Ndef NFC TAG discovered " + intent);
 	    nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 	    ndef = Ndef.get(nfcTag);
@@ -102,7 +115,10 @@ public class WriteTagActivity extends Activity {
 		    readMsgs[i] = (NdefMessage) rawMsgs[i];
 		}
 	    }
-	} else {
+	} else if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) {
+	    Log.i(TAG, "NFC TAG discovered " + intent);
+	    nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+    	} else {
 	    Log.d(TAG, "unknown or no NFC TAG " + intent);
 	}
     }
@@ -159,7 +175,9 @@ public class WriteTagActivity extends Activity {
 	NdefRecord idRecord = NdefRecord.createMime(TIME_MIMETYPE, longToByteArray(currentTime));
 	// records[0] = NdefRecord.createApplicationRecord("com.genymobile.fridgecheckup");
 	//TODO use more standard and shorter mimeType
-	records[0] = NdefRecord.createMime(USER_MIMETYPE, "Future username".getBytes(Charset.forName("US-ASCII")));
+	if (!TextUtils.isEmpty(accountName)) {
+	    records[0] = NdefRecord.createMime(USER_MIMETYPE, accountName.getBytes(Charset.forName("US-ASCII")));
+	}
 //	records[3] = NdefRecord.createMime("application/vnd.com.genymobile.fridgecheckup.useruri", "Future user d+uri".getBytes(Charset.forName("US-ASCII")));
 	final NdefMessage message = new NdefMessage(idRecord , records);
 	AsyncTask<NdefMessage, Void, Boolean> writeTask = new AsyncTask<NdefMessage, Void, Boolean>() {
@@ -213,5 +231,35 @@ public class WriteTagActivity extends Activity {
     private long byteArrayToLong(byte[] b) {
 	long  res = ByteBuffer.wrap(b).getLong();
 	return res;
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	if (requestCode == REQUEST_SELECT_ACCOUNT && resultCode == RESULT_OK) {
+	    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+	    saveAccount(accountName);
+	    this.accountName = accountName;
+	} else {
+
+	}
+
+    }
+
+    private void saveAccount(String accountName) {
+	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+	sp.edit().putString(ACCOUNT_NAME, accountName).apply();
+    }
+
+    private String getAccountName() {
+	SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+	return sp.getString(ACCOUNT_NAME, "");
+    }
+
+
+    private void selectAccount() {
+	Intent intent = AccountManager.newChooseAccountIntent(null, null,
+		new String[] {GOOGLE_ACCOUNT_TYPE}, true, null, null, null, null);
+	startActivityForResult(intent, REQUEST_SELECT_ACCOUNT);
     }
 }
