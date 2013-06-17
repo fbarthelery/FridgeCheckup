@@ -34,6 +34,8 @@ public class WriteTagActivity extends Activity {
     private PendingIntent dispatchIntent;
     private ImageButton tagBtn;
     private TextView infoTxt;
+    private TextView scanTxt;
+    private boolean writeMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +46,7 @@ public class WriteTagActivity extends Activity {
 		new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
 	tagBtn = (ImageButton) findViewById(R.id.tagButton);
 	infoTxt = (TextView) findViewById(R.id.infoLabel);
+	scanTxt = (TextView) findViewById(R.id.scanLabel);
     }
 
     @Override
@@ -64,9 +67,13 @@ public class WriteTagActivity extends Activity {
     protected void onNewIntent(Intent intent) {
 	super.onNewIntent(intent);
 	Log.i(TAG, "onNewIntent");
-	parseIntent(intent);
-	setIntent(intent);
-	updateTagTexts();
+	if (writeMode) {
+	    writeTag();
+	} else {
+	    parseIntent(intent);
+	    setIntent(intent);
+	    updateTagTexts();
+	}
     }
 
     @Override
@@ -126,8 +133,19 @@ public class WriteTagActivity extends Activity {
 	}
     }
 
-    public void onWriteTagClicked(View v) {
-	writeTag();
+    public void onToggleWriteClicked(View v) {
+	toggleWriteMode();
+    }
+
+    private void toggleWriteMode() {
+	writeMode = !writeMode;
+	if (writeMode) {
+	    scanTxt.setVisibility(View.VISIBLE);
+	    infoTxt.setVisibility(View.GONE);
+	} else {
+	    scanTxt.setVisibility(View.GONE);
+	    infoTxt.setVisibility(View.VISIBLE);
+	}
     }
 
     private void writeTag() {
@@ -154,7 +172,7 @@ public class WriteTagActivity extends Activity {
 		else
 		    Toast.makeText(WriteTagActivity.this, "Failed to write Nfc Tag", Toast.LENGTH_SHORT).show();
 		//TODO make a confirmation or error sound
-
+		toggleWriteMode();
 	    }
 
 	    @Override

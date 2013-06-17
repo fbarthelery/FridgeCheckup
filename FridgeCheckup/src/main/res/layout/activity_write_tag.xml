@@ -11,10 +11,19 @@
 	android:layout_gravity="center_horizontal"
 	android:minWidth="256dp"
 	android:minHeight="256dp"
-	android:onClick="onWriteTagClicked"
+	android:onClick="onToggleWriteClicked"
 	android:src="@drawable/ic_launcher"
 	android:scaleType="fitXY"
 	/>
+
+
+    <TextView android:id="@+id/scanLabel"
+	      android:layout_width="match_parent"
+	      android:layout_height="wrap_content"
+	      android:textAppearance="?android:attr/textAppearanceLarge"
+	      android:text="@string/write_tag"
+	      android:visibility="gone"
+	    />
 
     <TextView android:id="@+id/infoLabel"
 	android:layout_width="match_parent"
