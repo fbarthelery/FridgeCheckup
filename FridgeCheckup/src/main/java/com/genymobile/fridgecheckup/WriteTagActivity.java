@@ -2,19 +2,27 @@ package com.genymobile.fridgecheckup;
 
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.LoaderManager;
 import android.app.PendingIntent;
+import android.content.ContentUris;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.nfc.*;
 import android.nfc.tech.Ndef;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.QuickContactBadge;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +43,12 @@ public class WriteTagActivity extends Activity {
     private static final String ACCOUNT_NAME = "account";
     private static final int REQUEST_SELECT_ACCOUNT = 0;
     private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
+    private static final int LOAD_CONTACT_DATA = 0;
+    private static final String[] CONTACT_PROJECTION = new String[] { ContactsContract.RawContacts.CONTACT_ID,
+	    								ContactsContract.Contacts.LOOKUP_KEY,
+	    								ContactsContract.CommonDataKinds.Email.ADDRESS,
+    									ContactsContract.Contacts.DISPLAY_NAME,
+    								};
     private NfcAdapter nfcAdapter;
     private Tag nfcTag;
     private Ndef ndef;
@@ -43,8 +57,11 @@ public class WriteTagActivity extends Activity {
     private ImageButton tagBtn;
     private TextView infoTxt;
     private TextView scanTxt;
+    private QuickContactBadge contactBadge;
     private boolean writeMode = false;
     private String accountName;
+    private String tagUserEmail = "";
+    private LoaderManager.LoaderCallbacks<Cursor> loaderCallbacks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +73,11 @@ public class WriteTagActivity extends Activity {
 	tagBtn = (ImageButton) findViewById(R.id.tagButton);
 	infoTxt = (TextView) findViewById(R.id.infoLabel);
 	scanTxt = (TextView) findViewById(R.id.scanLabel);
+	contactBadge = (QuickContactBadge) findViewById(R.id.contactBadge);
 	accountName = getAccountName();
+
+	loaderCallbacks = new MyLoaderCallback();
+	// select an account
 	if (TextUtils.isEmpty(accountName)) {
 	    selectAccount();
 	}
@@ -73,7 +94,7 @@ public class WriteTagActivity extends Activity {
     protected void onResume() {
 	super.onResume();
 	Log.i(TAG, "onResume");
-	nfcAdapter.enableForegroundDispatch(this,  dispatchIntent, null, null );
+	nfcAdapter.enableForegroundDispatch(this, dispatchIntent, null, null);
     }
 
     @Override
@@ -139,6 +160,10 @@ public class WriteTagActivity extends Activity {
 			}
 		    } else if (USER_MIMETYPE.equals(type)) {
 			username = new String(data, charset);
+			tagUserEmail = username;
+			//TODO search it in contact
+			LoaderManager loaderManager = getLoaderManager();
+			loaderManager.restartLoader(LOAD_CONTACT_DATA, null, loaderCallbacks);
 		    }
 
 		}
@@ -262,4 +287,46 @@ public class WriteTagActivity extends Activity {
 		new String[] {GOOGLE_ACCOUNT_TYPE}, true, null, null, null, null);
 	startActivityForResult(intent, REQUEST_SELECT_ACCOUNT);
     }
+
+    private class MyLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+
+	@Override
+	public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+	    if (i == LOAD_CONTACT_DATA) {
+		return new CursorLoader(WriteTagActivity.this, ContactsContract.Data.CONTENT_URI, CONTACT_PROJECTION,
+			ContactsContract.Data.MIMETYPE + "=" + ContactsContract.CommonDataKinds.Email.MIMETYPE + " AND " + ContactsContract.CommonDataKinds.Email.ADDRESS + "=?",
+			new String[] { tagUserEmail } ,
+			null
+			);
+	    }
+	    return null;
+	}
+
+	@Override
+	public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+		//update contact badge
+	    int lookupColumn = cursor.getColumnIndex(ContactsContract.Contacts.LOOKUP_KEY);
+	    int contactIdColumn = cursor.getColumnIndex(ContactsContract.RawContacts.CONTACT_ID);
+	    int emailColumn = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS);
+	    int displayNameColumn = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+	    if (cursor.moveToFirst()) { //only get the first result
+		String lookupKey = cursor.getString(lookupColumn);
+		String displayName = cursor.getString(displayNameColumn);
+
+		Uri lookupUri = ContactsContract.Contacts.CONTENT_LOOKUP_URI.buildUpon().appendPath(lookupKey).build();
+		contactBadge.assignContactUri(lookupUri);
+
+	    } else {
+		contactBadge.setImageToDefault();
+	    }
+
+
+	}
+
+	@Override
+	public void onLoaderReset(Loader<Cursor> cursorLoader) {
+		//TODO hide contact badge ? and show email
+	}
+    }
+
 }
