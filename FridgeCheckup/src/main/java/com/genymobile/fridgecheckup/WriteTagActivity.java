@@ -1,10 +1,34 @@
+/*
+    FridgeCheckup is a simple application to write and read Nfc Tag on food
+    you put in your fridge.
+
+    Copyright (C) 2013 by Frederic-Charles Barthelery
+
+    This file is part of FridgeCheckup.
+
+    FridgeCheckup is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    FridgeCheckup is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with FridgeCheckup.  If not, see <http://www.gnu.org/licenses/>.
+
+    Please send bug reports with examples or suggestions to
+    fbarthelery@genymobile.com
+
+*/
 package com.genymobile.fridgecheckup;
 
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
-import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
