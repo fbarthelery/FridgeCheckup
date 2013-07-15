@@ -55,3 +55,4 @@ maven-eclipse.xml
 
 #gradle build
 build/
+out/

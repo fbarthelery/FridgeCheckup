@@ -198,7 +198,7 @@ public class WriteTagActivity extends Activity {
 	    CharSequence dateFormatted = "unknown time";
 	    if (time > 0)
 	    	dateFormatted = DateUtils.getRelativeTimeSpanString(time, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
-		    DateUtils.FORMAT_SHOW_DATE|DateUtils.FORMAT_SHOW_TIME| DateUtils.FORMAT_SHOW_WEEKDAY );
+			DateUtils.FORMAT_24HOUR | DateUtils.FORMAT_SHOW_DATE|DateUtils.FORMAT_SHOW_TIME| DateUtils.FORMAT_SHOW_WEEKDAY);
 
 	    infoTxt.setText("This was added " + dateFormatted + " by " + username);
 	}
