@@ -43,6 +43,7 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -194,7 +195,12 @@ public class WriteTagActivity extends Activity {
 	    }
 
 	    Log.i(TAG, "Tag was written by " + username + " at " + time);
-	    infoTxt.setText("This was added the " + new Date(time) + " by " + username);
+	    CharSequence dateFormatted = "unknown time";
+	    if (time > 0)
+	    	dateFormatted = DateUtils.getRelativeTimeSpanString(time, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
+		    DateUtils.FORMAT_SHOW_DATE|DateUtils.FORMAT_SHOW_TIME| DateUtils.FORMAT_SHOW_WEEKDAY );
+
+	    infoTxt.setText("This was added " + dateFormatted + " by " + username);
 	}
     }
 
