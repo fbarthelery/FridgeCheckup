@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
     FridgeCheckup is a simple application to write and read Nfc Tag on food
     you put in your fridge.
@@ -23,8 +24,6 @@
     fbarthelery@genymobile.com
 
 -->
-<?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
